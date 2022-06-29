@@ -14,3 +14,6 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Wifi-routine"
 include ':app'
+include ':data'
+include ':presentation'
+include ':domain'
