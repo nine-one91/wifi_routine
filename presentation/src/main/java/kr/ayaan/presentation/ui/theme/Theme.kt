@@ -1,4 +1,4 @@
-package kr.ayaan.wifi_routine.ui.theme
+package kr.ayaan.presentation.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
