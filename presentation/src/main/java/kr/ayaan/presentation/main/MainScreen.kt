@@ -1,10 +1,14 @@
 package kr.ayaan.presentation.main
 
 import android.annotation.SuppressLint
+import android.net.wifi.ScanResult
+import android.net.wifi.WifiManager
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
@@ -16,25 +20,37 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import kr.ayaan.presentation.R
 import kr.ayaan.presentation.common.CustomButton
+import kr.ayaan.presentation.common.CustomDialog
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
-    navController: NavController
+    navController: NavController,
+    mainViewModel: MainViewModel = viewModel()
 ) {
     val scope = rememberCoroutineScope()
     val bottomState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+
+    if (bottomState.isVisible) {
+        mainViewModel.getCurrentInfo()
+    }
+
     ModalBottomSheetLayout(
         sheetBackgroundColor = Color.Black,
         sheetState = bottomState,
@@ -89,6 +105,9 @@ fun MainScreen(
                 }
             }
         ) {
+            if (mainViewModel.showWifiList.value) {
+                WifiListDialog()
+            }
             Column(
                 modifier = Modifier
                     .padding(
@@ -188,8 +207,12 @@ fun WhiteBox(
 }
 
 @Composable
-fun ModalBottomSheet() {
+fun ModalBottomSheet(
+    mainViewModel: MainViewModel = viewModel()
+) {
     var todo by remember { mutableStateOf("") }
+
+    val currentInfo: Map<String, String> by mainViewModel.currentWifiInfo.observeAsState(mapOf())
 
     Box(
         modifier = Modifier
@@ -214,9 +237,16 @@ fun ModalBottomSheet() {
                             style = MaterialTheme.typography.labelMedium.copy(MaterialTheme.colorScheme.outline)
                         )
                         Spacer(Modifier.height(8.dp))
-                        Text("My Network", style = MaterialTheme.typography.bodyMedium)
+
+                        Text(
+                            currentInfo.getOrElse("ssid") { "no Wifi" },
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
-                    Icon(Icons.Default.Menu, contentDescription = "Network List")
+                    IconButton(onClick = { mainViewModel.changeShowWifiList() }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Network List")
+                    }
+
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -246,3 +276,59 @@ fun ModalBottomSheet() {
         }
     }
 }
+
+@Composable
+fun WifiListDialog(
+    mainViewModel: MainViewModel = viewModel()
+) {
+    val wifiList: List<ScanResult>? by mainViewModel.wifiList.observeAsState(null)
+    Log.d("MAINSCREEN", "${wifiList}")
+    CustomDialog(onDismissRequest = { mainViewModel.changeShowWifiList() }) {
+        Column(
+            modifier = Modifier
+                .background(Color.White)
+                .fillMaxHeight(0.7f)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("WIFI LIST", style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(16.dp))
+            LazyColumn {
+                itemsIndexed(
+                    wifiList ?: emptyList()
+                ) { index, item ->
+                    WifiCard(item)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun WifiCard(data: ScanResult) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(35.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            when {
+                WifiManager.calculateSignalLevel(data.level, 5) == 1 -> Icon(painter = painterResource(id = R.drawable.ic_wifi_1_bar), contentDescription = "wifi1")
+                WifiManager.calculateSignalLevel(data.level, 5) == 2 -> Icon(painter = painterResource(id = R.drawable.ic_wifi_2_bar), contentDescription = "wifi2")
+                WifiManager.calculateSignalLevel(data.level, 5) == 3 -> Icon(painter = painterResource(id = R.drawable.ic_wifi_3_bar), contentDescription = "wifi3")
+                WifiManager.calculateSignalLevel(data.level, 5) == 4 -> Icon(painter = painterResource(id = R.drawable.ic_wifi_4_bar), contentDescription = "wifi4")
+                WifiManager.calculateSignalLevel(data.level, 5) == 5 -> Icon(painter = painterResource(id = R.drawable.ic_wifi_5_bar), contentDescription = "wifi5")
+            }
+
+            Text(
+                data.SSID,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
+
+    }
+}
+
