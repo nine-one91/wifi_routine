@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
-@SuppressLint("ServiceCast")
+@SuppressLint("ServiceCast", "WifiManagerPotentialLeak")
 class WifiManager(val applicationContext: Context) {
 
     companion object {
@@ -27,7 +27,6 @@ class WifiManager(val applicationContext: Context) {
     }
 
     lateinit var wifiManager: android.net.wifi.WifiManager
-    lateinit var wifiRttManager: WifiRttManager
     lateinit var wifiScanReceiver: BroadcastReceiver
     var isRegister = false
 
@@ -35,29 +34,6 @@ class WifiManager(val applicationContext: Context) {
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     }
 
-    //    callbackFlow<ScanResult> {
-//        wifiScanReceiver = object : BroadcastReceiver() {
-//            override fun onReceive(context: Context?, intent: Intent) {
-//
-//                if (WifiManager.SCAN_RESULTS_AVAILABLE_ACTION.equals(intent.action)) {
-//                    val results = wifiManager.scanResults
-//                    Log.d(TAG, "onReceive1: ${results}")
-//                    results.forEach {
-//                        launch {
-//                            send(it)
-//                        }
-//                    }
-//                }
-////                if (WifiManager.EXTRA_RESULTS_UPDATED.equals(intent.action)) {
-////                    val results = wifiManager.scanResults
-////                    Log.d(TAG, "onReceive2: ${results}")
-////                }
-//
-//
-//            }
-//        }
-//        awaitClose{ applicationContext.unregisterReceiver(wifiScanReceiver) }
-//    }
     suspend fun getWifiScanResult(): Flow<List<ScanResult>> = callbackFlow {
         wifiScanReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent) {
@@ -76,7 +52,6 @@ class WifiManager(val applicationContext: Context) {
     }
 
     fun startScan() {
-        Log.d("STARTSCAN", "STARTSCAN")
         isRegister = true
         val intentFilter = IntentFilter()
         intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)

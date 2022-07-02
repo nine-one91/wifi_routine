@@ -5,6 +5,7 @@ import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -296,8 +297,8 @@ fun WifiListDialog(
             LazyColumn {
                 itemsIndexed(
                     wifiList ?: emptyList()
-                ) { index, item ->
-                    WifiCard(item)
+                ) { _, item ->
+                    WifiCard(item) { mainViewModel.selectWifi(it) }
                 }
             }
         }
@@ -305,11 +306,14 @@ fun WifiListDialog(
 }
 
 @Composable
-fun WifiCard(data: ScanResult) {
+fun WifiCard(data: ScanResult, onClick: (ScanResult) -> Unit) {
     Box(
         Modifier
             .fillMaxWidth()
             .height(35.dp)
+            .clickable {
+                onClick(data)
+            }
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically

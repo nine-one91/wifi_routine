@@ -42,13 +42,13 @@ class MainViewModel : ViewModel() {
         get() = _showWifiList
 
 
-    fun startScan() {
-        wifiManager.startScan()
-    }
-
-    fun stopScan() {
-        wifiManager.stopScan()
-    }
+//    fun startScan() {
+//        wifiManager.startScan()
+//    }
+//
+//    fun stopScan() {
+//        wifiManager.stopScan()
+//    }
 
     fun getCurrentInfo(){
         _currentWifiInfo.value = wifiManager.getCurrentWifiInfo()
@@ -59,5 +59,9 @@ class MainViewModel : ViewModel() {
         if(_showWifiList.value) {
             wifiManager.startScan()
         }
+    }
+    fun selectWifi(result: ScanResult) {
+        _currentWifiInfo.value = mapOf("ssid" to result.SSID, "key" to result.BSSID)
+        _showWifiList.value = false
     }
 }
